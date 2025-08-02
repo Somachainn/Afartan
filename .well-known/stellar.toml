@@ -1,0 +1,19 @@
+VERSION="2.0"
+
+NETWORK_PASSPHRASE="Public Global Stellar Network ; September 2015"
+ACCOUNTS=[
+  "GAL4ECDAXNBMJYFCWIJ32HKVIRLCNEXY664CAZYI3EINQWPLXTMEPR64"
+]
+
+[DOCUMENTATION]
+ORG_NAME="Laam Project"
+ORG_URL="https://laam.online"
+ORG_LOGO="https://fond-magenta-owpureihfj.edgeone.app/20250802_225108.png"
+ORG_DESCRIPTION="Laam is a native token built on Stellar with a fixed max supply of 1,335,577."
+
+[[CURRENCIES]]
+code="LAAM"
+issuer="GAL4ECDAXNBMJYFCWIJ32HKVIRLCNEXY664CAZYI3EINQWPLXTMEPR64"
+display_decimals=2
+desc="Native Stellar Token for Laam Project"
+name="Laam"
