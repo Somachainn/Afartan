@@ -1,3 +1,12 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>stellar.toml</title>
+</head>
+<body>
+  <h1>stellar.toml</h1>
+  <pre>
 VERSION="2.0"
 
 NETWORK_PASSPHRASE="Public Global Stellar Network ; September 2015"
@@ -17,3 +26,6 @@ issuer="GAL4ECDAXNBMJYFCWIJ32HKVIRLCNEXY664CAZYI3EINQWPLXTMEPR64"
 display_decimals=2
 desc="Native Stellar Token for Laam Project"
 name="Laam"
+  </pre>
+</body>
+</html>
