@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Laam DEX -  Trading with Trustline</title>
+<title>Laam DEX - Laam/XLM Trading with Trustline</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap');
 
@@ -171,10 +171,10 @@
   <input type="number" id="tradeAmount" placeholder="Enter amount" min="0" step="any" />
 </p>
 <p>
-  Price (XLM per Laam, optional):<br />
-  <input type="number" id="tradePrice" placeholder="Leave empty for market price" min="0" step="any" />
+  Price (XLM per Laam):<br />
+  <input type="number" id="tradePrice" placeholder="Enter price" min="0" step="any" />
 </p>
-<button id="placeOfferBtn">Place Offer (Test)</button>
+<button id="placeOfferBtn">Place Offer</button>
 
 <hr />
 
@@ -224,7 +224,15 @@
   tradePairSelect.addEventListener('change', () => {
     updateAmountLabel();
     fetchOrderbook();
+    calculateTotal();
     clearStatus();
+  });
+
+  amountInput.addEventListener('input', () => {
+    calculateTotal();
+  });
+  priceInput.addEventListener('input', () => {
+    calculateTotal();
   });
 
   function clearStatus() {
@@ -324,31 +332,33 @@
     try {
       const ob = await server.orderbook(sellingAsset, buyingAsset).call();
 
-      if (!ob.bids.length) {
-        buyOffersTbody.innerHTML = '<tr><td colspan="3" style="text-align:center; color:#777;">-</td></tr>';
-      } else {
-        buyOffersTbody.innerHTML = ob.bids
-          .map(
-            (b) =>
-              `<tr><td>${parseFloat(b.price).toFixed(7)}</td><td>${parseFloat(b.amount).toFixed(7)}</td><td>${(
-                parseFloat(b.price) * parseFloat(b.amount)
-              ).toFixed(7)}</td></tr>`
-          )
-          .join('');
-      }
+      // Display bids (buy offers)
+      buyOffersTbody.innerHTML = ob.bids.length
+        ? ob.bids
+            .map(
+              (b) =>
+                `<tr>
+                  <td>${parseFloat(b.price).toFixed(7)}</td>
+                  <td>${parseFloat(b.amount).toFixed(7)}</td>
+                  <td>${(parseFloat(b.price) * parseFloat(b.amount)).toFixed(7)}</td>
+                </tr>`
+            )
+            .join('')
+        : '<tr><td colspan="3" style="text-align:center; color:#777;">-</td></tr>';
 
-      if (!ob.asks.length) {
-        sellOffersTbody.innerHTML = '<tr><td colspan="3" style="text-align:center; color:#777;">-</td></tr>';
-      } else {
-        sellOffersTbody.innerHTML = ob.asks
-          .map(
-            (a) =>
-              `<tr><td>${parseFloat(a.price).toFixed(7)}</td><td>${parseFloat(a.amount).toFixed(7)}</td><td>${(
-                parseFloat(a.price) * parseFloat(a.amount)
-              ).toFixed(7)}</td></tr>`
-          )
-          .join('');
-      }
+      // Display asks (sell offers)
+      sellOffersTbody.innerHTML = ob.asks.length
+        ? ob.asks
+            .map(
+              (a) =>
+                `<tr>
+                  <td>${parseFloat(a.price).toFixed(7)}</td>
+                  <td>${parseFloat(a.amount).toFixed(7)}</td>
+                  <td>${(parseFloat(a.price) * parseFloat(a.amount)).toFixed(7)}</td>
+                </tr>`
+            )
+            .join('')
+        : '<tr><td colspan="3" style="text-align:center; color:#777;">-</td></tr>';
     } catch (err) {
       buyOffersTbody.innerHTML = '<tr><td colspan="3" style="text-align:center; color:#f33;">Error loading offers</td></tr>';
       sellOffersTbody.innerHTML = '<tr><td colspan="3" style="text-align:center; color:#f33;">Error loading offers</td></tr>';
@@ -368,12 +378,13 @@
       return;
     }
 
-    let price = priceInput.value.trim();
-    if (price === '') {
-      alert('Please enter price for now.');
+    const priceStr = priceInput.value.trim();
+    if (priceStr === '') {
+      alert('Please enter a valid price.');
       return;
     }
-    price = parseFloat(price);
+
+    const price = parseFloat(priceStr);
     if (isNaN(price) || price <= 0) {
       alert('Enter a valid price.');
       return;
@@ -422,11 +433,31 @@
     }
   }
 
+  function calculateTotal() {
+    const amount = parseFloat(amountInput.value);
+    const price = parseFloat(priceInput.value);
+    if (isNaN(amount) || isNaN(price) || amount <= 0 || price <= 0) {
+      statusMsg.textContent = '';
+      return;
+    }
+
+    let total;
+    if (tradePairSelect.value === 'xlm_to_laam') {
+      // Amount is XLM paid, total XLM paid = amount
+      total = amount;
+      statusMsg.textContent = `You pay approx ${total.toFixed(7)} XLM to buy Laam`;
+    } else {
+      // Amount is Laam sold, total XLM received = amount * price
+      total = amount * price;
+      statusMsg.textContent = `You will receive approx ${total.toFixed(7)} XLM by selling Laam`;
+    }
+  }
+
   loadBtn.addEventListener('click', loadAccount);
   addTrustlineBtn.addEventListener('click', addTrustline);
   placeOfferBtn.addEventListener('click', placeOffer);
 
-  // Initialize
+  // Initialize UI
   updateAmountLabel();
   fetchOrderbook();
 </script>
