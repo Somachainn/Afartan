@@ -3,10 +3,9 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Laam DEX - Laam/XLM Trading with Trustline</title>
+<title>Laam DEX - Laam/XLM Trading</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap');
-
   body {
     font-family: 'Inter', sans-serif;
     background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
@@ -24,9 +23,6 @@
     margin-bottom: 15px;
     color: #ffd36b;
     text-shadow: 0 0 10px #ffd36b;
-  }
-  p strong {
-    color: #ffd36b;
   }
   input, select, button {
     font-size: 1rem;
@@ -151,7 +147,7 @@
 </style>
 </head>
 <body>
-<h1>Laam DEX - Laam/XLM Trading with Trustline</h1>
+<h1>Laam DEX - Laam/XLM Trading</h1>
 <p><strong>Secret Key:</strong></p>
 <input type="password" id="secretKeyInput" placeholder="Enter your Stellar secret key" />
 <button id="loadAccountBtn">Load Account</button>
@@ -332,31 +328,44 @@
     try {
       const ob = await server.orderbook(sellingAsset, buyingAsset).call();
 
+      // Stellar orderbook price is always "selling per buying"
+      // For Laam/XLM, Horizon returns price as Laam per XLM
+      // We invert it to get XLM per Laam for user-friendly display
+
+      function invertPrice(p) {
+        const num = parseFloat(p);
+        return num === 0 ? 0 : 1 / num;
+      }
+
       // Display bids (buy offers)
       buyOffersTbody.innerHTML = ob.bids.length
         ? ob.bids
-            .map(
-              (b) =>
-                `<tr>
-                  <td>${parseFloat(b.price).toFixed(7)}</td>
-                  <td>${parseFloat(b.amount).toFixed(7)}</td>
-                  <td>${(parseFloat(b.price) * parseFloat(b.amount)).toFixed(7)}</td>
-                </tr>`
-            )
+            .map(b => {
+              const priceXlmPerLaam = invertPrice(b.price);
+              const amountLaam = parseFloat(b.amount);
+              const totalXlm = priceXlmPerLaam * amountLaam;
+              return `<tr>
+                <td title="Exact price: ${priceXlmPerLaam}">${priceXlmPerLaam.toFixed(7)}</td>
+                <td>${amountLaam.toFixed(7)}</td>
+                <td>${totalXlm.toFixed(7)}</td>
+              </tr>`;
+            })
             .join('')
         : '<tr><td colspan="3" style="text-align:center; color:#777;">-</td></tr>';
 
       // Display asks (sell offers)
       sellOffersTbody.innerHTML = ob.asks.length
         ? ob.asks
-            .map(
-              (a) =>
-                `<tr>
-                  <td>${parseFloat(a.price).toFixed(7)}</td>
-                  <td>${parseFloat(a.amount).toFixed(7)}</td>
-                  <td>${(parseFloat(a.price) * parseFloat(a.amount)).toFixed(7)}</td>
-                </tr>`
-            )
+            .map(a => {
+              const priceXlmPerLaam = invertPrice(a.price);
+              const amountLaam = parseFloat(a.amount);
+              const totalXlm = priceXlmPerLaam * amountLaam;
+              return `<tr>
+                <td title="Exact price: ${priceXlmPerLaam}">${priceXlmPerLaam.toFixed(7)}</td>
+                <td>${amountLaam.toFixed(7)}</td>
+                <td>${totalXlm.toFixed(7)}</td>
+              </tr>`;
+            })
             .join('')
         : '<tr><td colspan="3" style="text-align:center; color:#777;">-</td></tr>';
     } catch (err) {
@@ -384,11 +393,15 @@
       return;
     }
 
-    const price = parseFloat(priceStr);
+    let price = parseFloat(priceStr);
     if (isNaN(price) || price <= 0) {
       alert('Enter a valid price.');
       return;
     }
+
+    // Because UI shows XLM per Laam, but Horizon expects Laam per XLM
+    // we invert price before submitting
+    const priceLaamPerXlm = price === 0 ? 0 : 1 / price;
 
     let sellingAsset, buyingAsset;
     if (tradePairSelect.value === 'xlm_to_laam') {
@@ -412,7 +425,7 @@
             selling: sellingAsset,
             buying: buyingAsset,
             amount: amount.toFixed(7),
-            price: price.toString(),
+            price: priceLaamPerXlm.toString(),
             offerId: '0',
           })
         )
@@ -443,11 +456,11 @@
 
     let total;
     if (tradePairSelect.value === 'xlm_to_laam') {
-      // Amount is XLM paid, total XLM paid = amount
+      // User pays XLM amount = amount input
       total = amount;
       statusMsg.textContent = `You pay approx ${total.toFixed(7)} XLM to buy Laam`;
     } else {
-      // Amount is Laam sold, total XLM received = amount * price
+      // User sells Laam amount = amount input, receives XLM = amount * price
       total = amount * price;
       statusMsg.textContent = `You will receive approx ${total.toFixed(7)} XLM by selling Laam`;
     }
