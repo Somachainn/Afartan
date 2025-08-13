@@ -1,478 +1,237 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>DEX - Laam/XLM </title>
-<style>
-  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap');
-  body {
-    font-family: 'Inter', sans-serif;
-    background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
-    color: #e6eef6;
-    margin: 0;
-    padding: 30px 20px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    min-height: 100vh;
-  }
-  h1 {
-    font-weight: 700;
-    font-size: 2.8rem;
-    margin-bottom: 15px;
-    color: #ffd36b;
-    text-shadow: 0 0 10px #ffd36b;
-  }
-  input, select, button {
-    font-size: 1rem;
-    padding: 12px 16px;
-    margin: 10px 0;
-    width: 100%;
-    max-width: 420px;
-    border-radius: 12px;
-    border: none;
-    box-sizing: border-box;
-    transition: box-shadow 0.3s ease, background-color 0.3s ease;
-  }
-  input {
-    background: #1e2a38;
-    color: #e6eef6;
-    box-shadow: inset 0 0 8px #203a43;
-  }
-  input::placeholder {
-    color: #6a7a8c;
-  }
-  select {
-    background: #22354b;
-    color: #e6eef6;
-    cursor: pointer;
-    box-shadow: 0 0 10px #203a43;
-  }
-  button {
-    background: #ffd36b;
-    color: #071422;
-    font-weight: 700;
-    cursor: pointer;
-    box-shadow: 0 4px 12px rgba(255, 211, 107, 0.6);
-    user-select: none;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-  }
-  button:hover:not(:disabled) {
-    background: #ffca3a;
-    box-shadow: 0 6px 20px rgba(255, 202, 58, 0.8);
-  }
-  button:disabled {
-    background: #999;
-    cursor: not-allowed;
-    box-shadow: none;
-  }
-  #accountPubKey {
-    font-family: monospace;
-    background: #22354b;
-    padding: 12px 16px;
-    border-radius: 12px;
-    margin-bottom: 20px;
-    max-width: 420px;
-    overflow-wrap: break-word;
-  }
-  hr {
-    width: 100%;
-    max-width: 420px;
-    border: none;
-    border-top: 1px solid #395269;
-    margin: 30px 0;
-  }
-  h2 {
-    font-weight: 600;
-    color: #ffd36b;
-    margin-bottom: 10px;
-    max-width: 420px;
-    width: 100%;
-    text-shadow: 0 0 5px #ffd36b;
-  }
-  table {
-    width: 100%;
-    max-width: 600px;
-    border-collapse: separate;
-    border-spacing: 0 10px;
-    margin-top: 16px;
-  }
-  caption {
-    font-weight: 700;
-    color: #ffd36b;
-    text-align: left;
-    margin-bottom: 8px;
-    font-size: 1.1rem;
-    text-shadow: 0 0 6px #ffd36b;
-  }
-  th, td {
-    padding: 14px 20px;
-    background: #1e2a38;
-    border-radius: 12px;
-    text-align: right;
-    color: #e6eef6;
-  }
-  th {
-    text-align: left;
-    background: transparent;
-    color: #ffd36b;
-    font-weight: 600;
-    text-shadow: 0 0 5px #ffd36b;
-  }
-  tbody tr:hover td {
-    background: #22354b;
-  }
-  #statusMsg {
-    max-width: 600px;
-    margin-top: 25px;
-    font-weight: 600;
-    color: #ffd36b;
-    text-align: center;
-    text-shadow: 0 0 8px #ffd36b;
-    min-height: 28px;
-  }
-  @media (max-width: 480px) {
+  <meta charset="UTF-8">
+  <title>Laam DEX</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/stellar-sdk/10.4.0/stellar-sdk.min.js"></script>
+  <style>
     body {
-      padding: 20px 10px;
+      font-family: Arial, sans-serif;
+      background: linear-gradient(135deg, #0f172a, #1e293b);
+      color: #fff;
+      text-align: center;
+      padding: 20px;
     }
-    input, select, button, #accountPubKey, h2 {
-      max-width: 100%;
+    h1 {
+      margin-bottom: 10px;
+      font-size: 2em;
+      color: #38bdf8;
+    }
+    .container {
+      max-width: 800px;
+      margin: auto;
+      background: rgba(255, 255, 255, 0.05);
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.5);
+    }
+    .row {
+      margin: 15px 0;
+    }
+    label {
+      display: block;
+      margin-bottom: 5px;
+    }
+    input, select, button {
+      padding: 8px;
+      width: 90%;
+      border-radius: 6px;
+      border: none;
+    }
+    button {
+      background-color: #38bdf8;
+      color: black;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #0ea5e9;
     }
     table {
-      max-width: 100%;
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 15px;
     }
-  }
-</style>
+    th, td {
+      padding: 8px;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+      text-align: center;
+    }
+    .mono {
+      font-family: monospace;
+    }
+    hr {
+      border: 0;
+      height: 1px;
+      background: rgba(255,255,255,0.1);
+      margin: 20px 0;
+    }
+  </style>
 </head>
 <body>
-<h1>Laam DEX - Laam/XLM Trading</h1>
-<p><strong>Secret Key:</strong></p>
-<input type="password" id="secretKeyInput" placeholder="Enter your Stellar secret key" />
-<button id="loadAccountBtn">Load Account</button>
-<p id="accountPubKey">Public Key: -</p>
-<button id="addTrustlineBtn" disabled>Add Trustline for Laam</button>
+  <h1>Laam DEX</h1>
+  <div class="container">
+    <!-- Create Account -->
+    <div class="row">
+      <button id="createAccountBtn">Create New Account</button>
+    </div>
+    <div class="row">
+      <label>New Account Secret Key</label>
+      <div id="newSecret" class="mono">-</div>
+    </div>
+    <div class="row">
+      <label>New Account Public Key</label>
+      <div id="newPublic" class="mono">-</div>
+    </div>
+    <div class="row" style="font-size:0.9em; opacity:0.8">
+      * Ku keydi secret key-ga meel ammaan ah.
+    </div>
+    <hr/>
 
-<hr />
+    <!-- Login -->
+    <div class="row">
+      <label>Enter Your Secret Key</label>
+      <input type="text" id="secretKey" placeholder="SB...">
+      <button id="loadAccount">Load Account</button>
+    </div>
+    <div class="row">
+      <button id="addTrustline">Add Laam Trustline</button>
+    </div>
+    <div id="status" class="row"></div>
 
-<h2>Trade Direction</h2>
-<select id="tradePair">
-  <option value="xlm_to_laam">Buy Laam (Pay XLM)</option>
-  <option value="laam_to_xlm">Sell Laam (Get XLM)</option>
-</select>
+    <hr/>
 
-<p>
-  Amount (<span id="amountLabel">XLM</span>):<br />
-  <input type="number" id="tradeAmount" placeholder="Enter amount" min="0" step="any" />
-</p>
-<p>
-  Price (XLM per Laam):<br />
-  <input type="number" id="tradePrice" placeholder="Enter price" min="0" step="any" />
-</p>
-<button id="placeOfferBtn">Place Offer</button>
+    <!-- Place Offer -->
+    <div class="row">
+      <label>Type</label>
+      <select id="orderType">
+        <option value="buy">Buy Laam</option>
+        <option value="sell">Sell Laam</option>
+      </select>
+    </div>
+    <div class="row">
+      <label>Price (XLM per Laam)</label>
+      <input type="number" id="price" step="0.0000001">
+    </div>
+    <div class="row">
+      <label>Amount (Laam)</label>
+      <input type="number" id="amount" step="0.0000001">
+    </div>
+    <div class="row">
+      <button id="placeOffer">Place Offer</button>
+    </div>
 
-<hr />
+    <hr/>
 
-<h2>Market Offers</h2>
-<table>
-  <caption>Buy Offers (Bids)</caption>
-  <thead><tr><th>Price (XLM/Laam)</th><th>Amount (Laam)</th><th>Total (XLM)</th></tr></thead>
-  <tbody id="buyOffers"></tbody>
-</table>
+    <!-- Order Books -->
+    <h3>Buy Offers</h3>
+    <table id="buyOffers">
+      <tr><th>Price (XLM/Laam)</th><th>Amount</th><th>Total (XLM)</th></tr>
+    </table>
 
-<table>
-  <caption>Sell Offers (Asks)</caption>
-  <thead><tr><th>Price (XLM/Laam)</th><th>Amount (Laam)</th><th>Total (XLM)</th></tr></thead>
-  <tbody id="sellOffers"></tbody>
-</table>
+    <h3>Sell Offers</h3>
+    <table id="sellOffers">
+      <tr><th>Price (XLM/Laam)</th><th>Amount</th><th>Total (XLM)</th></tr>
+    </table>
+  </div>
 
-<p id="statusMsg"></p>
+  <script>
+    const server = new StellarSdk.Server('https://horizon.stellar.org');
+    const issuer = 'GAL4ECDAXNBMJYFCWIJ32HKVIRLCNEXY664CAZYI3EINQWPLXTMEPR64';
+    const laam = new StellarSdk.Asset('Laam', issuer);
+    let keypair, account;
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/stellar-sdk/8.2.3/stellar-sdk.min.js"></script>
-<script>
-  const server = new StellarSdk.Server('https://horizon.stellar.org');
+    const statusDiv = document.getElementById('status');
 
-  const LAAM = new StellarSdk.Asset('Laam', 'GAL4ECDAXNBMJYFCWIJ32HKVIRLCNEXY664CAZYI3EINQWPLXTMEPR64');
-  const XLM = StellarSdk.Asset.native();
-
-  const secretInput = document.getElementById('secretKeyInput');
-  const loadBtn = document.getElementById('loadAccountBtn');
-  const pubKeyDisplay = document.getElementById('accountPubKey');
-  const addTrustlineBtn = document.getElementById('addTrustlineBtn');
-  const tradePairSelect = document.getElementById('tradePair');
-  const amountInput = document.getElementById('tradeAmount');
-  const priceInput = document.getElementById('tradePrice');
-  const placeOfferBtn = document.getElementById('placeOfferBtn');
-  const buyOffersTbody = document.getElementById('buyOffers');
-  const sellOffersTbody = document.getElementById('sellOffers');
-  const statusMsg = document.getElementById('statusMsg');
-  const amountLabel = document.getElementById('amountLabel');
-
-  let activeKeypair = null;
-  let accountData = null;
-
-  function updateAmountLabel() {
-    const val = tradePairSelect.value;
-    amountLabel.textContent = val === 'xlm_to_laam' ? 'XLM' : 'Laam';
-  }
-
-  tradePairSelect.addEventListener('change', () => {
-    updateAmountLabel();
-    fetchOrderbook();
-    calculateTotal();
-    clearStatus();
-  });
-
-  amountInput.addEventListener('input', () => {
-    calculateTotal();
-  });
-  priceInput.addEventListener('input', () => {
-    calculateTotal();
-  });
-
-  function clearStatus() {
-    statusMsg.textContent = '';
-  }
-
-  function clearOffers() {
-    buyOffersTbody.innerHTML = '';
-    sellOffersTbody.innerHTML = '';
-  }
-
-  async function loadAccount() {
-    const secret = secretInput.value.trim();
-    if (!secret) {
-      alert('Please enter your secret key');
-      return;
-    }
-    try {
-      activeKeypair = StellarSdk.Keypair.fromSecret(secret);
-      pubKeyDisplay.textContent = 'Public Key: ' + activeKeypair.publicKey();
-      statusMsg.textContent = 'Loading account data...';
-      accountData = await server.loadAccount(activeKeypair.publicKey());
-      statusMsg.textContent = 'Account loaded successfully.';
-      addTrustlineBtn.disabled = false;
-      fetchOrderbook();
-    } catch (e) {
-      alert('Invalid secret key or unable to load account.');
-      statusMsg.textContent = '';
-      activeKeypair = null;
-      accountData = null;
-      pubKeyDisplay.textContent = 'Public Key: -';
-      addTrustlineBtn.disabled = true;
-      clearOffers();
-    }
-  }
-
-  async function addTrustline() {
-    if (!activeKeypair || !accountData) {
-      alert('Load your account first.');
-      return;
+    function setStatus(msg){
+      statusDiv.innerText = msg;
     }
 
-    // Check if trustline already exists
-    const trustlineExists = accountData.balances.some(
-      (bal) =>
-        bal.asset_code === LAAM.code &&
-        bal.asset_issuer === LAAM.issuer
-    );
-    if (trustlineExists) {
-      alert('Trustline for Laam already exists.');
-      return;
-    }
+    // Create Account
+    document.getElementById('createAccountBtn').addEventListener('click', () => {
+      const kp = StellarSdk.Keypair.random();
+      document.getElementById('newSecret').innerText = kp.secret();
+      document.getElementById('newPublic').innerText = kp.publicKey();
+      setStatus('New account created. Fund with XLM to activate.');
+    });
 
-    try {
-      statusMsg.textContent = 'Submitting trustline transaction...';
-
-      const fee = await server.fetchBaseFee();
-
-      const transaction = new StellarSdk.TransactionBuilder(accountData, {
-        fee,
-        networkPassphrase: StellarSdk.Networks.PUBLIC,
-      })
-        .addOperation(
-          StellarSdk.Operation.changeTrust({
-            asset: LAAM,
-          })
-        )
-        .setTimeout(30)
-        .build();
-
-      transaction.sign(activeKeypair);
-
-      const txResult = await server.submitTransaction(transaction);
-
-      statusMsg.textContent = 'Trustline added successfully! Tx Hash: ' + txResult.hash;
-
-      // Reload account data after trustline added
-      accountData = await server.loadAccount(activeKeypair.publicKey());
-    } catch (err) {
-      console.error(err);
-      statusMsg.textContent = 'Error adding trustline: ' + err.message;
-    }
-  }
-
-  async function fetchOrderbook() {
-    clearOffers();
-    clearStatus();
-    let sellingAsset, buyingAsset;
-    if (tradePairSelect.value === 'xlm_to_laam') {
-      sellingAsset = XLM;
-      buyingAsset = LAAM;
-    } else {
-      sellingAsset = LAAM;
-      buyingAsset = XLM;
-    }
-
-    try {
-      const ob = await server.orderbook(sellingAsset, buyingAsset).call();
-
-      // Stellar orderbook price is always "selling per buying"
-      // For Laam/XLM, Horizon returns price as Laam per XLM
-      // We invert it to get XLM per Laam for user-friendly display
-
-      function invertPrice(p) {
-        const num = parseFloat(p);
-        return num === 0 ? 0 : 1 / num;
+    // Load Account
+    document.getElementById('loadAccount').addEventListener('click', async () => {
+      try {
+        keypair = StellarSdk.Keypair.fromSecret(document.getElementById('secretKey').value.trim());
+        account = await server.loadAccount(keypair.publicKey());
+        setStatus('Account loaded: ' + keypair.publicKey());
+        loadOrderBook();
+      } catch(e) {
+        setStatus('Error loading account: ' + e);
       }
+    });
 
-      // Display bids (buy offers)
-      buyOffersTbody.innerHTML = ob.bids.length
-        ? ob.bids
-            .map(b => {
-              const priceXlmPerLaam = invertPrice(b.price);
-              const amountLaam = parseFloat(b.amount);
-              const totalXlm = priceXlmPerLaam * amountLaam;
-              return `<tr>
-                <td title="Exact price: ${priceXlmPerLaam}">${priceXlmPerLaam.toFixed(7)}</td>
-                <td>${amountLaam.toFixed(7)}</td>
-                <td>${totalXlm.toFixed(7)}</td>
-              </tr>`;
-            })
-            .join('')
-        : '<tr><td colspan="3" style="text-align:center; color:#777;">-</td></tr>';
+    // Add Trustline
+    document.getElementById('addTrustline').addEventListener('click', async () => {
+      try {
+        const tx = new StellarSdk.TransactionBuilder(account, { fee: await StellarSdk.BASE_FEE, networkPassphrase: StellarSdk.Networks.PUBLIC })
+          .addOperation(StellarSdk.Operation.changeTrust({ asset: laam }))
+          .setTimeout(30)
+          .build();
+        tx.sign(keypair);
+        await server.submitTransaction(tx);
+        setStatus('Trustline added for Laam.');
+      } catch(e) {
+        setStatus('Error adding trustline: ' + e);
+      }
+    });
 
-      // Display asks (sell offers)
-      sellOffersTbody.innerHTML = ob.asks.length
-        ? ob.asks
-            .map(a => {
-              const priceXlmPerLaam = invertPrice(a.price);
-              const amountLaam = parseFloat(a.amount);
-              const totalXlm = priceXlmPerLaam * amountLaam;
-              return `<tr>
-                <td title="Exact price: ${priceXlmPerLaam}">${priceXlmPerLaam.toFixed(7)}</td>
-                <td>${amountLaam.toFixed(7)}</td>
-                <td>${totalXlm.toFixed(7)}</td>
-              </tr>`;
-            })
-            .join('')
-        : '<tr><td colspan="3" style="text-align:center; color:#777;">-</td></tr>';
-    } catch (err) {
-      buyOffersTbody.innerHTML = '<tr><td colspan="3" style="text-align:center; color:#f33;">Error loading offers</td></tr>';
-      sellOffersTbody.innerHTML = '<tr><td colspan="3" style="text-align:center; color:#f33;">Error loading offers</td></tr>';
-      console.error(err);
+    // Place Offer
+    document.getElementById('placeOffer').addEventListener('click', async () => {
+      try {
+        const price = parseFloat(document.getElementById('price').value);
+        const amount = parseFloat(document.getElementById('amount').value);
+        const type = document.getElementById('orderType').value;
+
+        const selling = type === 'sell' ? laam : StellarSdk.Asset.native();
+        const buying = type === 'sell' ? StellarSdk.Asset.native() : laam;
+
+        const tx = new StellarSdk.TransactionBuilder(account, { fee: await StellarSdk.BASE_FEE, networkPassphrase: StellarSdk.Networks.PUBLIC })
+          .addOperation(StellarSdk.Operation.manageSellOffer({
+            selling: selling,
+            buying: buying,
+            amount: amount.toString(),
+            price: price.toString(),
+            offerId: 0
+          }))
+          .setTimeout(30)
+          .build();
+        tx.sign(keypair);
+        await server.submitTransaction(tx);
+        setStatus('Offer placed.');
+        account = await server.loadAccount(keypair.publicKey());
+        loadOrderBook();
+      } catch(e) {
+        setStatus('Error placing offer: ' + e);
+      }
+    });
+
+    // Load Order Book
+    async function loadOrderBook(){
+      try {
+        const orderbook = await server.orderbook(laam, StellarSdk.Asset.native()).call();
+        const buyTable = document.getElementById('buyOffers');
+        const sellTable = document.getElementById('sellOffers');
+
+        buyTable.innerHTML = '<tr><th>Price (XLM/Laam)</th><th>Amount</th><th>Total (XLM)</th></tr>';
+        sellTable.innerHTML = '<tr><th>Price (XLM/Laam)</th><th>Amount</th><th>Total (XLM)</th></tr>';
+
+        orderbook.bids.forEach(b => {
+          buyTable.innerHTML += `<tr><td>${b.price}</td><td>${b.amount}</td><td>${(parseFloat(b.price)*parseFloat(b.amount)).toFixed(7)}</td></tr>`;
+        });
+        orderbook.asks.forEach(a => {
+          sellTable.innerHTML += `<tr><td>${a.price}</td><td>${a.amount}</td><td>${(parseFloat(a.price)*parseFloat(a.amount)).toFixed(7)}</td></tr>`;
+        });
+      } catch(e) {
+        setStatus('Error loading orderbook: ' + e);
+      }
     }
-  }
-
-  async function placeOffer() {
-    if (!activeKeypair) {
-      alert('Load your secret key first.');
-      return;
-    }
-
-    const amount = parseFloat(amountInput.value);
-    if (isNaN(amount) || amount <= 0) {
-      alert('Enter a valid amount.');
-      return;
-    }
-
-    const priceStr = priceInput.value.trim();
-    if (priceStr === '') {
-      alert('Please enter a valid price.');
-      return;
-    }
-
-    let price = parseFloat(priceStr);
-    if (isNaN(price) || price <= 0) {
-      alert('Enter a valid price.');
-      return;
-    }
-
-    // Because UI shows XLM per Laam, but Horizon expects Laam per XLM
-    // we invert price before submitting
-    const priceLaamPerXlm = price === 0 ? 0 : 1 / price;
-
-    let sellingAsset, buyingAsset;
-    if (tradePairSelect.value === 'xlm_to_laam') {
-      sellingAsset = XLM;
-      buyingAsset = LAAM;
-    } else {
-      sellingAsset = LAAM;
-      buyingAsset = XLM;
-    }
-
-    try {
-      const account = await server.loadAccount(activeKeypair.publicKey());
-      const fee = await server.fetchBaseFee();
-
-      const transaction = new StellarSdk.TransactionBuilder(account, {
-        fee,
-        networkPassphrase: StellarSdk.Networks.PUBLIC,
-      })
-        .addOperation(
-          StellarSdk.Operation.manageSellOffer({
-            selling: sellingAsset,
-            buying: buyingAsset,
-            amount: amount.toFixed(7),
-            price: priceLaamPerXlm.toString(),
-            offerId: '0',
-          })
-        )
-        .setTimeout(30)
-        .build();
-
-      transaction.sign(activeKeypair);
-
-      statusMsg.textContent = 'Submitting transaction...';
-
-      const txResult = await server.submitTransaction(transaction);
-      statusMsg.textContent = 'Offer placed successfully. Tx Hash: ' + txResult.hash;
-
-      await fetchOrderbook();
-    } catch (err) {
-      console.error(err);
-      statusMsg.textContent = 'Error placing offer: ' + err.message;
-    }
-  }
-
-  function calculateTotal() {
-    const amount = parseFloat(amountInput.value);
-    const price = parseFloat(priceInput.value);
-    if (isNaN(amount) || isNaN(price) || amount <= 0 || price <= 0) {
-      statusMsg.textContent = '';
-      return;
-    }
-
-    let total;
-    if (tradePairSelect.value === 'xlm_to_laam') {
-      // User pays XLM amount = amount input
-      total = amount;
-      statusMsg.textContent = `You pay approx ${total.toFixed(7)} XLM to buy Laam`;
-    } else {
-      // User sells Laam amount = amount input, receives XLM = amount * price
-      total = amount * price;
-      statusMsg.textContent = `You will receive approx ${total.toFixed(7)} XLM by selling Laam`;
-    }
-  }
-
-  loadBtn.addEventListener('click', loadAccount);
-  addTrustlineBtn.addEventListener('click', addTrustline);
-  placeOfferBtn.addEventListener('click', placeOffer);
-
-  // Initialize UI
-  updateAmountLabel();
-  fetchOrderbook();
-</script>
+  </script>
 </body>
 </html>
