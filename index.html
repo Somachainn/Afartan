@@ -65,6 +65,8 @@
   }
   #status{ min-height:28px; font-weight:700; color:var(--brand); }
   .muted{ color:var(--muted); font-size:.92rem; }
+  
+  /* New Balance Display Styles */
   .balances-grid{
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -119,7 +121,7 @@
                     <div id="newPublic" class="mono">-</div>
                     <div class="muted" style="margin-top:6px;">
                         * Save your secret key securely!<br>
-                        Copy your public wallet and deposit at least 2 XLM to unlock.
+                        Copy your public wallet and deposit at least 2 XLM to open your wallet.
                     </div>
                 </div>
             </div>
@@ -215,7 +217,7 @@ const server = new StellarSdk.Server('https://horizon.stellar.org');
 const ISSUER = 'GAL4ECDAXNBMJYFCWIJ32HKVIRLCNEXY664CAZYI3EINQWPLXTMEPR64';
 const LAAM  = new StellarSdk.Asset('Laam', ISSUER);
 const XLM   = StellarSdk.Asset.native();
-const ENCRYPTED_KEY_NAME = 'laam_dex_wallet_v5';
+const ENCRYPTED_KEY_NAME = 'laam_dex_wallet_v6';
 
 // === GLOBAL STATE ===
 let keypair = null;
@@ -433,6 +435,4 @@ async function placeOffer(isBuy) {
     setStatus('Placing offer...', 'ok');
     try {
         const freshAccount = await server.loadAccount(keypair.publicKey());
-        const fee = await server.fetchBaseFee();
-        const op = isBuy
-          
+        const fee = await server.fet
