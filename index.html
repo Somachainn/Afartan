@@ -341,9 +341,24 @@
               </table>
           </div>
           <div class="trade-actions">
-              <button class="btn-buy">Buy</button>
-              <button class="btn-sell">Sell</button>
+              <button class="btn-buy" id="btnBuy">Buy</button>
+              <button class="btn-sell" id="btnSell">Sell</button>
           </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Trade Modal -->
+  <div id="tradeModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:1000; align-items:center; justify-content:center;">
+    <div class="card" style="max-width:400px; width:90%; padding:20px;">
+      <h3 id="tradeModalTitle" style="margin-top:0; color:var(--brand);"></h3>
+      <label for="tradeAmount">Amount (Laam)</label>
+      <input id="tradeAmount" type="number" step="0.0000001" placeholder="e.g. 100" />
+      <label for="tradePrice" style="margin-top:10px;">Price (XLM/Laam)</label>
+      <input id="tradePrice" type="number" step="0.0000001" placeholder="e.g. 0.135" />
+      <div style="display:flex; gap:10px; margin-top:20px;">
+        <button id="confirmTradeBtn" style="flex:1;"></button>
+        <button class="btn-secondary" style="flex:1;" onclick="closeTradeModal()">Cancel</button>
       </div>
     </div>
   </div>
@@ -371,6 +386,8 @@ const statusEl = document.getElementById('status');
 const bidsBody = document.getElementById('bidsBody');
 const asksBody = document.getElementById('asksBody');
 const spreadValue = document.getElementById('spreadValue');
+const btnBuy = document.getElementById('btnBuy');
+const btnSell = document.getElementById('btnSell');
 
 // === WALLET & ENCRYPTION ===
 function encryptKey(secretKey, password) { return CryptoJS.AES.encrypt(secretKey, password).toString(); }
@@ -532,37 +549,6 @@ document.getElementById('addTrustlineBtn').addEventListener('click', async () =>
     } catch (e) { alert('Error adding trustline: ' + e.message); }
 });
 
-// These functions are no longer tied to visible buttons in the new UI,
-// but the logic is kept for potential future use.
-async function placeOffer(isBuy) {
-    // You would need to get price and amount from a new form/modal
-    const price = prompt(`Enter price for ${isBuy ? 'buy' : 'sell'} offer:`);
-    const amount = prompt(`Enter amount for ${isBuy ? 'buy' : 'sell'} offer:`);
-
-    if (!price || !amount || !(parseFloat(price) > 0) || !(parseFloat(amount) > 0)) {
-        alert('Invalid price or amount.');
-        return;
-    }
-    
-    alert('Placing offer...');
-    try {
-        const freshAccount = await server.loadAccount(keypair.publicKey());
-        const fee = await server.fetchBaseFee();
-        const op = isBuy
-            ? StellarSdk.Operation.manageBuyOffer({ selling: XLM, buying: LAAM, buyAmount: amount, price: price })
-            : StellarSdk.Operation.manageSellOffer({ selling: LAAM, buying: XLM, amount: amount, price: price });
-        const tx = new StellarSdk.TransactionBuilder(freshAccount, { fee, networkPassphrase: StellarSdk.Networks.PUBLIC })
-            .addOperation(op).setTimeout(30).build();
-        tx.sign(keypair);
-        await server.submitTransaction(tx);
-        alert(`${isBuy ? 'Buy' : 'Sell'} offer placed.`);
-        await refreshBalances();
-        await loadOrderbook();
-    } catch (e) {
-        alert(`Offer Error: ` + (e?.response?.data?.extras?.result_codes?.operations?.[0] || e.message));
-    }
-}
-
 // === ORDERBOOK & INITIAL LOAD ===
 function fmt(n, d=7){ const x = parseFloat(n); return isFinite(x) ? x.toFixed(d) : '-'; }
 async function loadOrderbook(){
@@ -587,6 +573,57 @@ async function loadOrderbook(){
         bidsBody.innerHTML = `<tr><td colspan="3" class="muted">Error loading offers</td></tr>`;
     }
 }
+
+// New functions for buy/sell modal
+function showTradeModal(isBuy) {
+    const modal = document.getElementById('tradeModal');
+    const modalTitle = document.getElementById('tradeModalTitle');
+    const tradeButton = document.getElementById('confirmTradeBtn');
+
+    modalTitle.textContent = isBuy ? 'Buy Laam' : 'Sell Laam';
+    tradeButton.textContent = isBuy ? 'Buy' : 'Sell';
+    tradeButton.onclick = () => placeOffer(isBuy);
+    modal.style.display = 'block';
+}
+
+function closeTradeModal() {
+    document.getElementById('tradeModal').style.display = 'none';
+    document.getElementById('tradeAmount').value = '';
+    document.getElementById('tradePrice').value = '';
+}
+
+async function placeOffer(isBuy) {
+    const amount = document.getElementById('tradeAmount').value;
+    const price = document.getElementById('tradePrice').value;
+
+    if (!amount || !price || !(parseFloat(amount) > 0) || !(parseFloat(price) > 0)) {
+        alert('Please enter valid amount and price.');
+        return;
+    }
+    
+    alert('Placing offer...');
+    try {
+        const freshAccount = await server.loadAccount(keypair.publicKey());
+        const fee = await server.fetchBaseFee();
+        const op = isBuy
+            ? StellarSdk.Operation.manageBuyOffer({ selling: XLM, buying: LAAM, buyAmount: amount, price: price })
+            : StellarSdk.Operation.manageSellOffer({ selling: LAAM, buying: XLM, amount: amount, price: price });
+        const tx = new StellarSdk.TransactionBuilder(freshAccount, { fee, networkPassphrase: StellarSdk.Networks.PUBLIC })
+            .addOperation(op).setTimeout(30).build();
+        tx.sign(keypair);
+        await server.submitTransaction(tx);
+        alert(`${isBuy ? 'Buy' : 'Sell'} offer placed successfully.`);
+        closeTradeModal();
+        await refreshBalances();
+        await loadOrderbook();
+    } catch (e) {
+        alert(`Offer Error: ` + (e?.response?.data?.extras?.result_codes?.operations?.[0] || e.message));
+    }
+}
+
+// Event listeners for new Buy/Sell buttons
+btnBuy.addEventListener('click', () => showTradeModal(true));
+btnSell.addEventListener('click', () => showTradeModal(false));
 
 document.addEventListener('DOMContentLoaded', () => {
     showView(walletExists() ? 'unlock' : 'initial');
