@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Laam  Wallet</title>
+<title>Laam DEX Wallet</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/stellar-sdk/10.4.0/stellar-sdk.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
 <style>
@@ -65,12 +65,23 @@
   }
   #status{ min-height:28px; font-weight:700; color:var(--brand); }
   .muted{ color:var(--muted); font-size:.92rem; }
-  .balances{ display:flex; gap:16px; align-items:center; justify-content:center; flex-wrap:wrap; }
-  .pill{
-    background:#e9ecef; border:1px solid var(--line);
-    padding:8px 14px; border-radius:999px; font-weight:600; color: var(--text);
+  .balances-grid{
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    text-align: left;
+    margin-bottom: 16px;
   }
-  .usd-value { font-size: 0.85em; color: var(--muted); }
+  .balance-item {
+    background: #f8f9fa;
+    padding: 12px;
+    border-radius: 12px;
+    border: 1px solid var(--line);
+  }
+  .balance-item .asset-name { font-weight: 700; font-size: 1.2em; color: var(--brand); }
+  .balance-item .asset-amount { font-size: 1.1em; font-weight: 600; }
+  .balance-item .asset-usd { color: var(--muted); font-size: 0.9em; }
+
   .hidden { display: none; }
   .send-wrap{ display:none; margin-top:16px; text-align:left; border-top: 1px solid var(--line); padding-top: 16px; }
   .send-row{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
@@ -130,9 +141,19 @@
     <div id="loggedInView" class="hidden">
       <!-- Balances & Actions -->
       <div class="card">
-        <div class="balances">
-          <span class="pill">XLM: <span id="xlmBal">0.00</span> <span class="usd-value">(~$<span id="xlmUsd">0.00</span>)</span></span>
-          <span class="pill">Laam: <span id="laamBal">0.00</span> <span class="usd-value">(~$<span id="laamUsd">0.00</span>)</span></span>
+        <div class="balances-grid">
+            <div class="balance-item">
+                <div class="asset-name">XLM</div>
+                <div class="asset-amount" id="xlmBal">0.00</div>
+                <div class="asset-usd">~$<span id="xlmTotalUsd">0.00</span> USD</div>
+                <div class="asset-usd">@ $<span id="xlmPrice">...</span></div>
+            </div>
+            <div class="balance-item">
+                <div class="asset-name">Laam</div>
+                <div class="asset-amount" id="laamBal">0.00</div>
+                <div class="asset-usd">~$<span id="laamTotalUsd">0.00</span> USD</div>
+                <div class="asset-usd">@ $<span id="laamPrice">...</span></div>
+            </div>
         </div>
         <label style="margin-top:10px;">Your Public Key</label>
         <div id="pubKey" class="mono">-</div>
@@ -194,14 +215,14 @@ const server = new StellarSdk.Server('https://horizon.stellar.org');
 const ISSUER = 'GAL4ECDAXNBMJYFCWIJ32HKVIRLCNEXY664CAZYI3EINQWPLXTMEPR64';
 const LAAM  = new StellarSdk.Asset('Laam', ISSUER);
 const XLM   = StellarSdk.Asset.native();
-const ENCRYPTED_KEY_NAME = 'laam_dex_wallet_v4';
+const ENCRYPTED_KEY_NAME = 'laam_dex_wallet_v5';
 
 // === GLOBAL STATE ===
 let keypair = null;
 let account = null;
 let balTimer = null;
-let xlmPriceUsd = 0; // To store the XLM price in USD
-let laamPriceXlm = 0; // To store the Laam price in XLM
+let xlmPriceUsd = 0;
+let laamPriceXlm = 0;
 
 // === UI ELEMENTS ===
 const authSection = document.getElementById('authSection');
@@ -229,46 +250,35 @@ function setStatus(msg, type = 'ok') {
     statusEl.style.color = colorMap[type] || 'var(--brand)';
 }
 
-// === PRICE FETCHING ===
-async function fetchXlmPrice() {
+// === PRICE & BALANCE LOGIC ===
+async function updatePricesAndBalances() {
+    // 1. Fetch XLM to USD price
     try {
         const response = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=stellar&vs_currencies=usd');
         const data = await response.json();
         xlmPriceUsd = data.stellar.usd;
+        document.getElementById('xlmPrice').textContent = xlmPriceUsd.toFixed(4);
     } catch (e) {
         console.error("Could not fetch XLM price:", e);
-        xlmPriceUsd = 0; // Fallback
+        document.getElementById('xlmPrice').textContent = 'N/A';
     }
-}
 
-// === CORE APP FUNCTIONS ===
-async function login(secret) {
-    setStatus('Loading account...', 'ok');
+    // 2. Fetch Laam to XLM price from orderbook
     try {
-        keypair = StellarSdk.Keypair.fromSecret(secret);
-        account = await server.loadAccount(keypair.publicKey());
-        document.getElementById('pubKey').textContent = keypair.publicKey();
-        showView('loggedIn');
-        setStatus('Account loaded successfully.', 'ok');
-        await refreshBalances();
-        if (balTimer) clearInterval(balTimer);
-        balTimer = setInterval(refreshBalances, 15000);
+        const ob = await server.orderbook(LAAM, XLM).call();
+        if (ob.bids.length > 0) {
+            laamPriceXlm = parseFloat(ob.bids[0].price);
+        } else {
+            laamPriceXlm = 0; // No buyers, no price
+        }
+        const laamPriceUsd = laamPriceXlm * xlmPriceUsd;
+        document.getElementById('laamPrice').textContent = laamPriceUsd > 0 ? laamPriceUsd.toFixed(4) : '0.0000';
     } catch (e) {
-        keypair = null; account = null;
-        const errMsg = e.message.includes('404') ? 'Account not found. Fund it with XLM to activate.' : 'Could not load account. Check your key.';
-        alert(errMsg);
-        showView(walletExists() ? 'unlock' : 'initial');
+        console.error("Could not fetch Laam price:", e);
+        document.getElementById('laamPrice').textContent = 'N/A';
     }
-}
 
-function logout() {
-    keypair = null; account = null;
-    if (balTimer) clearInterval(balTimer);
-    document.getElementById('walletPassword').value = '';
-    showView(walletExists() ? 'unlock' : 'initial');
-}
-
-async function refreshBalances() {
+    // 3. Refresh account balances and update total USD values
     if (!keypair) return;
     try {
         account = await server.loadAccount(keypair.publicKey());
@@ -278,20 +288,41 @@ async function refreshBalances() {
             if (b.asset_code === 'Laam' && b.asset_issuer === ISSUER) laamBalance = parseFloat(b.balance);
         }
         
-        // Update Balances
-        document.getElementById('xlmBal').textContent = xlmBalance.toFixed(2);
-        document.getElementById('laamBal').textContent = laamBalance.toFixed(2);
+        document.getElementById('xlmBal').textContent = xlmBalance.toFixed(4);
+        document.getElementById('laamBal').textContent = laamBalance.toFixed(4);
 
-        // Update USD Values
-        document.getElementById('xlmUsd').textContent = (xlmBalance * xlmPriceUsd).toFixed(2);
-        if (laamPriceXlm > 0 && xlmPriceUsd > 0) {
-            const laamPriceUsd = laamPriceXlm * xlmPriceUsd;
-            document.getElementById('laamUsd').textContent = (laamBalance * laamPriceUsd).toFixed(2);
-        } else {
-            document.getElementById('laamUsd').textContent = '0.00';
-        }
+        document.getElementById('xlmTotalUsd').textContent = (xlmBalance * xlmPriceUsd).toFixed(2);
+        const laamTotalUsd = laamBalance * (laamPriceXlm * xlmPriceUsd);
+        document.getElementById('laamTotalUsd').textContent = laamTotalUsd > 0 ? laamTotalUsd.toFixed(2) : '0.00';
 
     } catch (e) { console.error('Balance refresh failed:', e); }
+}
+
+
+// === CORE APP FUNCTIONS ===
+async function login(secret) {
+    setStatus('Loading account...', 'ok');
+    try {
+        keypair = StellarSdk.Keypair.fromSecret(secret);
+        document.getElementById('pubKey').textContent = keypair.publicKey();
+        showView('loggedIn');
+        setStatus('Account loaded successfully.', 'ok');
+        await updatePricesAndBalances(); // Initial update
+        if (balTimer) clearInterval(balTimer);
+        balTimer = setInterval(updatePricesAndBalances, 20000); // Refresh every 20 seconds
+    } catch (e) {
+        keypair = null;
+        const errMsg = e.message.includes('404') ? 'Account not found. Fund it with XLM to activate.' : 'Could not load account. Check your key.';
+        alert(errMsg);
+        showView(walletExists() ? 'unlock' : 'initial');
+    }
+}
+
+function logout() {
+    keypair = null;
+    if (balTimer) clearInterval(balTimer);
+    document.getElementById('walletPassword').value = '';
+    showView(walletExists() ? 'unlock' : 'initial');
 }
 
 // === EVENT LISTENERS ===
@@ -371,13 +402,14 @@ document.getElementById('btnSend').addEventListener('click', async () => {
         await server.submitTransaction(tx);
         setStatus(`Sent ${amount} ${assetSel} successfully.`, 'ok');
         document.getElementById('sendForm').style.display = 'none';
-        await refreshBalances();
+        await updatePricesAndBalances();
     } catch (e) {
         setStatus('Error sending: ' + (e?.response?.data?.extras?.result_codes?.operations?.[0] || e.message), 'err');
     }
 });
 
 document.getElementById('addTrustlineBtn').addEventListener('click', async () => {
+    if (!account) { alert("Please load an account first."); return; }
     if (account.balances.some(b => b.asset_code === 'Laam')) { setStatus('Trustline already exists.', 'warn'); return; }
     setStatus('Adding trustline...', 'ok');
     try {
@@ -389,7 +421,7 @@ document.getElementById('addTrustlineBtn').addEventListener('click', async () =>
         tx.sign(keypair);
         await server.submitTransaction(tx);
         setStatus('Trustline added successfully.', 'ok');
-        await refreshBalances();
+        await updatePricesAndBalances();
     } catch (e) { setStatus('Error adding trustline: ' + e.message, 'err'); }
 });
 
@@ -403,25 +435,4 @@ async function placeOffer(isBuy) {
         const freshAccount = await server.loadAccount(keypair.publicKey());
         const fee = await server.fetchBaseFee();
         const op = isBuy
-            ? StellarSdk.Operation.manageBuyOffer({ selling: XLM, buying: LAAM, buyAmount: amount, price: price })
-            : StellarSdk.Operation.manageSellOffer({ selling: LAAM, buying: XLM, amount: amount, price: price });
-        const tx = new StellarSdk.TransactionBuilder(freshAccount, { fee, networkPassphrase: StellarSdk.Networks.PUBLIC })
-            .addOperation(op).setTimeout(30).build();
-        tx.sign(keypair);
-        await server.submitTransaction(tx);
-        setStatus(`${isBuy ? 'Buy' : 'Sell'} offer placed.`, 'ok');
-        await refreshBalances();
-        await loadOrderbook();
-    } catch (e) {
-        setStatus(`Offer Error: ` + (e?.response?.data?.extras?.result_codes?.operations?.[0] || e.message), 'err');
-    }
-}
-document.getElementById('btnPlaceBuy').addEventListener('click', () => placeOffer(true));
-document.getElementById('btnPlaceSell').addEventListener('click', () => placeOffer(false));
-
-// === ORDERBOOK & INITIAL LOAD ===
-function fmt(n, d=7){ const x = parseFloat(n); return isFinite(x) ? x.toFixed(d) : '-'; }
-async function loadOrderbook(){
-    try {
-        const ob = await server.orderbook(LAAM, XLM).call();
-        const rowHTML = (p, a) => `<tr><td>${fmt(p)}</td>
+          
