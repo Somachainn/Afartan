@@ -24,8 +24,19 @@
     min-height:100vh; display:flex; align-items:flex-start; justify-content:center; padding:24px 14px;
   }
   .app{ width:100%; max-width:var(--maxw); text-align:center; }
+  .logo-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 15px;
+    margin-bottom: 18px;
+  }
+  .logo-container img {
+      width: 50px;
+      height: 50px;
+  }
   h1{
-    margin:0 0 18px 0; font-size:2.2rem; font-weight:800; color:var(--brand);
+    margin:0; font-size:2.2rem; font-weight:800; color:var(--brand);
     text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
   }
   .card{
@@ -74,11 +85,121 @@
   .send-wrap{ display:none; margin-top:16px; text-align:left; border-top: 1px solid var(--line); padding-top: 16px; }
   .send-row{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
   @media (max-width:640px){ .send-row{ grid-template-columns:1fr; } }
+
+  /* New Trade UI Styles */
+  .trade-card {
+      padding: 0;
+      overflow: hidden;
+  }
+  .trade-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--line);
+  }
+  .trade-header h3 {
+      margin: 0;
+      font-size: 1.2rem;
+  }
+  .trade-header .icon {
+      font-size: 1.5rem;
+      cursor: pointer;
+  }
+  .trade-asset-selector {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 20px;
+      background: #f8f9fa;
+  }
+  .asset-box {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+  }
+  .asset-box img { width: 24px; height: 24px; }
+  .asset-box div { text-align: left; }
+  .asset-box .asset-name { font-weight: 600; }
+  .asset-box .asset-issuer { font-size: 0.8rem; color: var(--muted); }
+  .swap-icon {
+      font-size: 1.5rem;
+      background: white;
+      border-radius: 50%;
+      padding: 5px;
+      border: 1px solid var(--line);
+      cursor: pointer;
+  }
+  .trade-tabs {
+      display: flex;
+      border-bottom: 1px solid var(--line);
+  }
+  .trade-tabs .tab {
+      flex: 1;
+      padding: 12px;
+      text-align: center;
+      cursor: pointer;
+      font-weight: 600;
+      color: var(--muted);
+      border-bottom: 3px solid transparent;
+  }
+  .trade-tabs .tab.active {
+      color: var(--brand);
+      border-bottom-color: var(--brand);
+  }
+  .orderbook-content {
+      padding: 10px 20px 20px;
+  }
+  .orderbook-table {
+      width: 100%;
+      border-collapse: collapse;
+  }
+  .orderbook-table th, .orderbook-table td {
+      text-align: right;
+      padding: 8px 4px;
+      font-size: 0.9rem;
+  }
+  .orderbook-table th {
+      color: var(--muted);
+      font-weight: normal;
+  }
+  .orderbook-table th:first-child, .orderbook-table td:first-child { text-align: left; }
+  .orderbook-table .bid-row td:nth-child(2) { color: var(--ok); }
+  .orderbook-table .ask-row td:nth-child(2) { color: var(--err); }
+  .spread {
+      padding: 12px 0;
+      text-align: center;
+      font-weight: bold;
+      border-top: 1px solid var(--line);
+      border-bottom: 1px solid var(--line);
+      margin: 8px 0;
+  }
+  .trade-actions {
+      display: flex;
+      gap: 15px;
+      padding: 20px;
+      background: #f8f9fa;
+      border-top: 1px solid var(--line);
+  }
+  .trade-actions button {
+      flex: 1;
+      padding: 14px;
+      font-size: 1.1rem;
+      border-radius: 12px;
+      text-transform: uppercase;
+  }
+  .btn-buy { background-color: var(--ok); box-shadow: 0 4px 14px rgba(40, 167, 69, 0.3); }
+  .btn-buy:hover { background-color: #218838; }
+  .btn-sell { background-color: #e0e0e0; color: var(--text); box-shadow: 0 4px 14px rgba(0,0,0,0.1); }
+  .btn-sell:hover { background-color: #d5d5d5; }
 </style>
 </head>
 <body>
   <div class="app">
-    <h1>Laam DEX Wallet</h1>
+    <div class="logo-container">
+        <img src="https://i.imgur.com/k22La4B.png" alt="Laam Logo">
+        <h1>Laam DEX Wallet</h1>
+    </div>
 
     <!-- AUTHENTICATION SECTION -->
     <div id="authSection">
@@ -154,8 +275,8 @@
         </div>
       </div>
 
-      <!-- Trade Panels -->
-      <div class="card trade-panels grid-2">
+      <!-- Trade Panels (Old, now hidden) -->
+      <div class="card trade-panels grid-2" style="display:none;">
         <div>
           <h3>Buy Laam</h3>
           <label>Price (XLM/Laam)</label><input id="buyPrice" type="number" step="0.0000001" placeholder="e.g. 0.135" />
@@ -170,20 +291,59 @@
         </div>
       </div>
 
-      <!-- Orderbook -->
-      <div class="card">
-        <h3 style="margin:0 0 10px 0; color:var(--brand)">Market Offers</h3>
-        <div id="status" style="margin-bottom:10px;"></div>
-        <div class="grid-2">
-          <div>
-            <h4 style="margin:0 0 8px 0; color:var(--ok);">Bids (Buy Laam)</h4>
-            <table><thead><tr><th>Price</th><th>Amount(Laam)</th><th>Total(XLM)</th></tr></thead><tbody id="bidsBody"></tbody></table>
+      <!-- New Trade UI -->
+      <div class="card trade-card">
+          <div class="trade-header">
+              <span class="icon">←</span>
+              <h3>Trade</h3>
+              <span class="icon" onclick="loadOrderbook()">↻</span>
           </div>
-          <div>
-            <h4 style="margin:0 0 8px 0; color:var(--err);">Asks (Sell Laam)</h4>
-            <table><thead><tr><th>Price</th><th>Amount(Laam)</th><th>Total(XLM)</th></tr></thead><tbody id="asksBody"></tbody></table>
+          <div class="trade-asset-selector">
+              <div class="asset-box">
+                  <img src="https://i.imgur.com/k22La4B.png" alt="Laam">
+                  <div>
+                      <div class="asset-name">Laam</div>
+                      <div class="asset-issuer">laam.online</div>
+                  </div>
+              </div>
+              <span class="swap-icon">⇄</span>
+              <div class="asset-box">
+                  <img src="https://stellar.org/images/favicon/favicon-96x96.png" alt="XLM">
+                  <div>
+                      <div class="asset-name">XLM</div>
+                      <div class="asset-issuer">stellar.org</div>
+                  </div>
+              </div>
           </div>
-        </div>
+          <div class="trade-tabs">
+              <div class="tab">Overview</div>
+              <div class="tab active">Orderbook</div>
+              <div class="tab">Last Trades</div>
+          </div>
+          <div class="orderbook-content">
+              <table class="orderbook-table">
+                  <thead>
+                      <tr>
+                          <th>Amount (Laam)</th>
+                          <th>Price (XLM)</th>
+                          <th>Total (XLM)</th>
+                      </tr>
+                  </thead>
+                  <tbody id="asksBody">
+                      <!-- Asks (Sell offers) will be populated here -->
+                  </tbody>
+              </table>
+              <div class="spread" id="spreadValue">0.13499</div>
+              <table class="orderbook-table">
+                  <tbody id="bidsBody">
+                      <!-- Bids (Buy offers) will be populated here -->
+                  </tbody>
+              </table>
+          </div>
+          <div class="trade-actions">
+              <button class="btn-buy">Buy</button>
+              <button class="btn-sell">Sell</button>
+          </div>
       </div>
     </div>
   </div>
@@ -208,6 +368,9 @@ const unlockView = document.getElementById('unlockView');
 const initialView = document.getElementById('initialView');
 const createWalletForm = document.getElementById('createWalletForm');
 const statusEl = document.getElementById('status');
+const bidsBody = document.getElementById('bidsBody');
+const asksBody = document.getElementById('asksBody');
+const spreadValue = document.getElementById('spreadValue');
 
 // === WALLET & ENCRYPTION ===
 function encryptKey(secretKey, password) { return CryptoJS.AES.encrypt(secretKey, password).toString(); }
@@ -222,21 +385,22 @@ function showView(viewName) {
   initialView.style.display = (viewName === 'initial') ? 'block' : 'none';
 }
 function setStatus(msg, type = 'ok') {
-    statusEl.textContent = msg;
-    const colorMap = { ok: 'var(--brand)', err: 'var(--err)', warn: 'var(--warn)' };
-    statusEl.style.color = colorMap[type] || 'var(--brand)';
+    // Using alert for now as the old status element might be gone
+    console.log(`[${type.toUpperCase()}] ${msg}`);
+    alert(msg);
 }
 
 // === CORE APP FUNCTIONS ===
 async function login(secret) {
-    setStatus('Loading account...', 'ok');
+    console.log('Loading account...');
     try {
         keypair = StellarSdk.Keypair.fromSecret(secret);
         account = await server.loadAccount(keypair.publicKey());
         document.getElementById('pubKey').textContent = keypair.publicKey();
         showView('loggedIn');
-        setStatus('Account loaded successfully.', 'ok');
+        console.log('Account loaded successfully.');
         await refreshBalances();
+        await loadOrderbook();
         if (balTimer) clearInterval(balTimer);
         balTimer = setInterval(refreshBalances, 15000);
     } catch (e) {
@@ -331,7 +495,7 @@ document.getElementById('btnSend').addEventListener('click', async () => {
     const dest = document.getElementById('sendDest').value.trim();
     if (!dest || !(parseFloat(amount) > 0)) { alert('Enter a valid destination and amount.'); return; }
     
-    setStatus('Submitting transaction...', 'ok');
+    alert('Submitting transaction...');
     try {
         const freshAccount = await server.loadAccount(keypair.publicKey());
         const fee = await server.fetchBaseFee();
@@ -344,17 +508,17 @@ document.getElementById('btnSend').addEventListener('click', async () => {
             .setTimeout(30).build();
         tx.sign(keypair);
         await server.submitTransaction(tx);
-        setStatus(`Sent ${amount} ${assetSel} successfully.`, 'ok');
+        alert(`Sent ${amount} ${assetSel} successfully.`);
         document.getElementById('sendForm').style.display = 'none';
         await refreshBalances();
     } catch (e) {
-        setStatus('Error sending: ' + (e?.response?.data?.extras?.result_codes?.operations?.[0] || e.message), 'err');
+        alert('Error sending: ' + (e?.response?.data?.extras?.result_codes?.operations?.[0] || e.message));
     }
 });
 
 document.getElementById('addTrustlineBtn').addEventListener('click', async () => {
-    if (account.balances.some(b => b.asset_code === 'Laam')) { setStatus('Trustline already exists.', 'warn'); return; }
-    setStatus('Adding trustline...', 'ok');
+    if (account.balances.some(b => b.asset_code === 'Laam')) { alert('Trustline already exists.'); return; }
+    alert('Adding trustline...');
     try {
         const freshAccount = await server.loadAccount(keypair.publicKey());
         const fee = await server.fetchBaseFee();
@@ -363,17 +527,24 @@ document.getElementById('addTrustlineBtn').addEventListener('click', async () =>
             .setTimeout(30).build();
         tx.sign(keypair);
         await server.submitTransaction(tx);
-        setStatus('Trustline added successfully.', 'ok');
+        alert('Trustline added successfully.');
         await refreshBalances();
-    } catch (e) { setStatus('Error adding trustline: ' + e.message, 'err'); }
+    } catch (e) { alert('Error adding trustline: ' + e.message); }
 });
 
+// These functions are no longer tied to visible buttons in the new UI,
+// but the logic is kept for potential future use.
 async function placeOffer(isBuy) {
-    const price = document.getElementById(isBuy ? 'buyPrice' : 'sellPrice').value;
-    const amount = document.getElementById(isBuy ? 'buyAmount' : 'sellAmount').value;
-    if (!(parseFloat(price) > 0) || !(parseFloat(amount) > 0)) { alert('Enter a valid price and amount.'); return; }
+    // You would need to get price and amount from a new form/modal
+    const price = prompt(`Enter price for ${isBuy ? 'buy' : 'sell'} offer:`);
+    const amount = prompt(`Enter amount for ${isBuy ? 'buy' : 'sell'} offer:`);
+
+    if (!price || !amount || !(parseFloat(price) > 0) || !(parseFloat(amount) > 0)) {
+        alert('Invalid price or amount.');
+        return;
+    }
     
-    setStatus('Placing offer...', 'ok');
+    alert('Placing offer...');
     try {
         const freshAccount = await server.loadAccount(keypair.publicKey());
         const fee = await server.fetchBaseFee();
@@ -384,31 +555,45 @@ async function placeOffer(isBuy) {
             .addOperation(op).setTimeout(30).build();
         tx.sign(keypair);
         await server.submitTransaction(tx);
-        setStatus(`${isBuy ? 'Buy' : 'Sell'} offer placed.`, 'ok');
+        alert(`${isBuy ? 'Buy' : 'Sell'} offer placed.`);
         await refreshBalances();
         await loadOrderbook();
     } catch (e) {
-        setStatus(`Offer Error: ` + (e?.response?.data?.extras?.result_codes?.operations?.[0] || e.message), 'err');
+        alert(`Offer Error: ` + (e?.response?.data?.extras?.result_codes?.operations?.[0] || e.message));
     }
 }
-document.getElementById('btnPlaceBuy').addEventListener('click', () => placeOffer(true));
-document.getElementById('btnPlaceSell').addEventListener('click', () => placeOffer(false));
 
 // === ORDERBOOK & INITIAL LOAD ===
 function fmt(n, d=7){ const x = parseFloat(n); return isFinite(x) ? x.toFixed(d) : '-'; }
 async function loadOrderbook(){
+    console.log("Loading orderbook...");
     try {
-        const ob = await server.orderbook(LAAM, XLM).call();
-        const rowHTML = (p, a) => `<tr><td>${fmt(p)}</td><td>${fmt(a)}</td><td>${fmt(p * a)}</td></tr>`;
-        bidsBody.innerHTML = ob.bids.length ? ob.bids.map(b => rowHTML(b.price, b.amount)).join('') : `<tr><td colspan="3" class="muted">No offers</td></tr>`;
-        asksBody.innerHTML = ob.asks.length ? ob.asks.map(a => rowHTML(a.price, a.amount)).join('') : `<tr><td colspan="3" class="muted">No offers</td></tr>`;
-    } catch (e) { console.error('Orderbook Error:', e); }
+        const ob = await server.orderbook(LAAM, XLM).limit(10).call();
+        const rowHTML = (p, a, t, type) => `<tr class="${type}-row"><td>${fmt(a, 2)}</td><td>${fmt(p)}</td><td>${fmt(t, 4)}</td></tr>`;
+        
+        asksBody.innerHTML = ob.asks.length ? ob.asks.slice().reverse().map(a => rowHTML(a.price, a.amount, a.price * a.amount, 'ask')).join('') : `<tr><td colspan="3" class="muted">No sell offers</td></tr>`;
+        bidsBody.innerHTML = ob.bids.length ? ob.bids.map(b => rowHTML(b.price, b.amount, b.price * b.amount, 'bid')).join('') : `<tr><td colspan="3" class="muted">No buy offers</td></tr>`;
+
+        if (ob.bids.length > 0 && ob.asks.length > 0) {
+            const highestBid = parseFloat(ob.bids[0].price);
+            const lowestAsk = parseFloat(ob.asks[0].price);
+            spreadValue.textContent = fmt(lowestAsk, 5);
+        } else {
+            spreadValue.textContent = '-';
+        }
+    } catch (e) { 
+        console.error('Orderbook Error:', e);
+        asksBody.innerHTML = `<tr><td colspan="3" class="muted">Error loading offers</td></tr>`;
+        bidsBody.innerHTML = `<tr><td colspan="3" class="muted">Error loading offers</td></tr>`;
+    }
 }
 
 document.addEventListener('DOMContentLoaded', () => {
     showView(walletExists() ? 'unlock' : 'initial');
-    loadOrderbook();
+    if (!walletExists()) {
+        loadOrderbook(); // Load orderbook even for non-logged in users
+    }
 });
 </script>
 </body>
-  </html>
+</html>
